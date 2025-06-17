@@ -29,7 +29,30 @@ const DOC_BUILDER_URL = process.env.DOC_BUILDER_URL || "http://localhost:5002";
 // Initialize Express app & middleware
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: true, credentials: true }));
+
+// --- START: MODIFICATION FOR PRODUCTION CORS ---
+// Define the list of allowed origins (your frontend URLs)
+const allowedOrigins = [
+  'https://docuagent-2vp4.onrender.com', // Your deployed frontend on Render
+  'http://localhost:3000',             // For local development (e.g., Create React App)
+  'http://localhost:5173',             // For local development (e.g., Vite)
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests if the origin is in our list or if there's no origin (like Postman requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // This is essential for sending authorization headers
+};
+
+app.use(cors(corsOptions));
+// --- END: MODIFICATION FOR PRODUCTION CORS ---
+
 
 // -----------------------------------------------------------------------------
 // Connect to MongoDB
