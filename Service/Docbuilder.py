@@ -6,7 +6,7 @@ import uuid
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
-
+from docx2pdf import convert
 from PIL import Image
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
@@ -70,7 +70,7 @@ def proxy_uml():
     # This endpoint is kept for potential direct testing but is not used in the main flow.
     payload = request.get_json(force=True)
     resp = requests.post(
-        os.getenv("UML_AGENT_URL", "http://localhost:5001") + "/generate-uml-image",
+        os.getenv("UML_AGENT_URL", "https://umlgenerator.onrender.com") + "/generate-uml-image",
         json={
             "build_id":     payload.get("build_id", "default"),
             "abstract":     payload.get("abstract", ""),
@@ -111,7 +111,7 @@ def build_document():
     log.info("Requesting markdown from parent agent for build [%s]", build_id)
     try:
         md_resp = requests.post(
-            os.getenv("PARENT_AGENT_URL", "http://localhost:5000") + "/generate-doc",
+            os.getenv("PARENT_AGENT_URL", "https://aiagent-xyq4.onrender.com") + "/generate-doc",
             json={
                 "code":          data.get("code"),
                 "project_info":  data.get("project_info"),
@@ -134,7 +134,7 @@ def build_document():
     os.makedirs(build_diagrams_dir, exist_ok=True)
     try:
         uml_resp = requests.post(
-            os.getenv("UML_AGENT_URL", "http://localhost:5001") + "/generate-uml-image",
+            os.getenv("UML_AGENT_URL", "https://umlgenerator.onrender.com") + "/generate-uml-image",
             json={
                 "build_id":     build_id,
                 "abstract":     data.get("abstract",""),
@@ -184,7 +184,7 @@ def build_document():
     section = doc.sections[0]
     footer = section.footer
     p = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
-    p.text = "DocuAgent\t"
+    p.text = "GenDocAI | Confidential\t"
     run = p.add_run()
     fldChar1 = OxmlElement('w:fldChar')
     fldChar1.set(qn('w:fldCharType'), 'begin')
@@ -274,7 +274,7 @@ def build_document():
 
     if os.path.exists(docx_path) and os.path.getsize(docx_path) > 1000:
         try:
-            docx2pdf_convert(docx_path, pdf_path)
+            convert(docx_path, pdf_path)
             log.info("PDF saved → %s", pdf_path)
         except Exception as e:
             log.error("PDF conversion failed: %s", e)
