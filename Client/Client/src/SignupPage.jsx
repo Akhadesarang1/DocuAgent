@@ -68,7 +68,7 @@ export default function SignupPage() {
           password: formData.password,
         };
         const response = await axios.post(
-          'http://localhost:3001/signup',
+          'https://mainserver-kpei.onrender.com/signup',
           payload,
           {
             headers: { 'Content-Type': 'application/json' },
