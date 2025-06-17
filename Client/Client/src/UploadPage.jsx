@@ -78,7 +78,7 @@ const UploadPage = ({ onBackToLanding }) => {
     }
 
     const filename = downloadInfo[format];
-    const downloadUrl = `http://localhost:3001/download/${format}/${filename}`;
+    const downloadUrl = `https://mainserver-kpei.onrender.com/download/${format}/${filename}`;
     const authToken = localStorage.getItem("token");
 
     // Use fetch to make an authenticated request
@@ -146,7 +146,7 @@ const UploadPage = ({ onBackToLanding }) => {
       formData.append("format", format);
 
       const response = await axios.post(
-        "http://localhost:3001/generate",
+        "https://mainserver-kpei.onrender.com/generate",
         formData,
         {
           headers: {
@@ -176,7 +176,7 @@ const UploadPage = ({ onBackToLanding }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://localhost:3001/login", {
+      const response = await axios.post("https://mainserver-kpei.onrender.com/login", {
         email: authEmail,
         password: authPassword,
       });
@@ -192,7 +192,7 @@ const UploadPage = ({ onBackToLanding }) => {
 
   const handleSignup = async () => {
     try {
-      const response = await axios.post("http://localhost:3001/signup", {
+      const response = await axios.post("https://mainserver-kpei.onrender.com/signup", {
         email: authEmail,
         password: authPassword,
       });
