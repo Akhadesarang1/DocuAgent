@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+// --- FIX 1 of 2: Import 'Link' for client-side navigation ---
+import { useNavigate, Link } from "react-router-dom";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +32,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // POST to backend login route
+      // This API call is correct for the login itself.
       const response = await axios.post(
         "https://mainserver-kpei.onrender.com/login",
         {
@@ -39,23 +40,16 @@ export default function LoginPage() {
           password: formData.password,
         },
         {
-          withCredentials: true, // if you plan to use cookie-based auth
+          withCredentials: true, 
         }
       );
 
       // On success, backend sends back { token: "..." }
       const { token } = response.data;
-      // Store JWT in localStorage (or whichever storage you prefer)
+      
+      // Store JWT in localStorage. This is the key to authenticating other pages.
       localStorage.setItem("token", token);
-
-
-      // Optionally, if "remember me" is unchecked, you could store in sessionStorage instead:
-      // if (formData.remember) {
-      //   localStorage.setItem("authToken", token);
-      // } else {
-      //   sessionStorage.setItem("authToken", token);
-      // }
-
+ 
       // Redirect to dashboard (replace "/dashboard" with your actual protected route)
       navigate("/");
     } catch (err) {
@@ -294,12 +288,12 @@ export default function LoginPage() {
             className="text-center text-[#A1A1AA] text-sm mt-6"
           >
             Don't have an account?{" "}
-            <a
-              href="/signup"
+            <Link
+              to="/signup"
               className="text-[#6A75F5] font-medium hover:underline transition-all"
             >
               Create one
-            </a>
+            </Link>
           </motion.p>
         </form>
       </motion.div>
