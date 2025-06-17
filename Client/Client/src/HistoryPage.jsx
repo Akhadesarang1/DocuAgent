@@ -85,7 +85,7 @@ const HistoryPage = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       try {
         const { data: history } = await axios.get(
-          "http://localhost:3001/history",
+          "https://mainserver-kpei.onrender.com/history",
           config
         );
         setHistoryItems(history);
@@ -98,7 +98,7 @@ const HistoryPage = () => {
       }
       try {
         const { data: userData } = await axios.get(
-          "http://localhost:3001/auth/me",
+          "https://mainserver-kpei.onrender.com/auth/me",
           config
         );
         setUser(userData);
@@ -114,7 +114,7 @@ const HistoryPage = () => {
     const original = [...historyItems];
     setHistoryItems(historyItems.filter((item) => item._id !== id));
     try {
-      await axios.delete(`http://localhost:3001/history/${id}`, {
+      await axios.delete(`https://mainserver-kpei.onrender.com/history/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
     } catch (err) {
@@ -133,7 +133,7 @@ const HistoryPage = () => {
       return;
     }
 
-    const url = `http://localhost:3001/download/${fileType}/${filename}`;
+    const url = `https://mainserver-kpei.onrender.com/${fileType}/${filename}`;
 
     const link = document.createElement("a");
     link.href = url;
