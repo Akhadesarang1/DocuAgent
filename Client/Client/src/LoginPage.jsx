@@ -33,7 +33,7 @@ export default function LoginPage() {
     try {
       // POST to backend login route
       const response = await axios.post(
-        "http://localhost:3001/login",
+        "https://mainserver-kpei.onrender.com/login",
         {
           email: formData.email,
           password: formData.password,
