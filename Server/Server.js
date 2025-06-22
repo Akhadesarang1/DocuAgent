@@ -1,4 +1,4 @@
-// server.js
+// server.js (Updated)
 
 require("dotenv").config();
 const express = require("express");
@@ -30,8 +30,7 @@ const DOC_BUILDER_URL = process.env.DOC_BUILDER_URL || "http://localhost:5002";
 const app = express();
 app.use(express.json());
 
-// --- START: MODIFICATION FOR PRODUCTION CORS ---
-// Define the list of allowed origins (your frontend URLs)
+// --- CORS Configuration ---
 const allowedOrigins = [
   'https://docuagent-2vp4.onrender.com', // Your deployed frontend on Render
   'http://localhost:3000',             // For local development (e.g., Create React App)
@@ -40,40 +39,30 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests if the origin is in our list or if there's no origin (like Postman requests)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // This is essential for sending authorization headers
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
-// --- END: MODIFICATION FOR PRODUCTION CORS ---
-
 
 // -----------------------------------------------------------------------------
-// Connect to MongoDB
-mongoose
-  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("🟢 MongoDB connected"))
-  .catch((err) => {
-    console.error("🔴 MongoDB connection error:", err);
-    process.exit(1);
-  });
-
-// -----------------------------------------------------------------------------
-// User schema & model for authentication
+// --- MODIFICATION 1: UPDATED USER SCHEMA ---
+// The User schema now includes a 'name' field to store the user's full name,
+// which is sent from the frontend as 'username'.
 const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true }, // Added this line
   email: { type: String, unique: true, required: true },
   passwordHash: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 const User = mongoose.model("User", UserSchema);
 
-// --- UPGRADED: History schema now stores both prompt info and filenames ---
+// --- History schema (unchanged) ---
 const HistorySchema = new mongoose.Schema({
   userId: String,
   fileName: String,
@@ -91,7 +80,7 @@ const HistorySchema = new mongoose.Schema({
 const History = mongoose.model("History", HistorySchema);
 
 // -----------------------------------------------------------------------------
-// Auth middleware
+// Auth middleware (unchanged)
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -105,22 +94,29 @@ const auth = (req, res, next) => {
 };
 
 // -----------------------------------------------------------------------------
-// Auth endpoints
+// --- MODIFICATION 2: UPDATED SIGNUP ENDPOINT ---
+// The endpoint now expects 'username' in the request body to match the frontend.
+// It validates all three fields (username, email, password).
 app.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ message: "Email and password required" });
+  // Destructure 'username' along with email and password
+  const { username, email, password } = req.body;
+  if (!username || !email || !password)
+    return res.status(400).json({ message: "Username, email, and password are required" });
+
   const existing = await User.findOne({ email });
   if (existing)
     return res.status(409).json({ message: "Email already registered" });
+
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await User.create({ email, passwordHash });
+  // Save the 'username' to the 'name' field in the database
+  const user = await User.create({ name: username, email, passwordHash });
   const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
     expiresIn: "7d",
   });
   res.status(201).json({ message: "User created", token });
 });
 
+// Login endpoint (unchanged)
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -135,18 +131,19 @@ app.post("/login", async (req, res) => {
   res.json({ message: "Logged in", token });
 });
 
+// Auth me endpoint (unchanged)
 app.get("/auth/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-passwordHash");
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ name: user.email.split("@")[0] });
+    res.json({ name: user.name }); // Now correctly sends the user's name
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // -----------------------------------------------------------------------------
-// Multer setup
+// Multer setup (unchanged)
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (_, file, cb) =>
@@ -155,7 +152,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 
-// --- RESTORED: Code parsing and prompt building logic ---
+// --- Code parsing and prompt building logic (unchanged) ---
 function parseCode(code, ext) {
   const parser = new Parser();
   try {
@@ -195,7 +192,7 @@ function buildUmlInstructionsPrompt(code, instructions) {
   return `${UML_INSTRUCTIONS_PROMPT}\nCode:\n${code}\nInstructions:\n${instructions}`;
 }
 
-// --- UPGRADED: /generate endpoint using restored logic ---
+// --- /generate endpoint (unchanged) ---
 app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
   try {
     const {
@@ -208,8 +205,6 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
         .json({ message: "File and instructions required" });
 
     const code = fs.readFileSync(file.path, "utf8");
-
-    // Perform parsing and prompt building from previous logic
     const parseInfo = parseCode(
       code,
       path.extname(file.originalname).toLowerCase()
@@ -220,7 +215,6 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
       instructions
     );
 
-    // Assemble the complete payload for the docbuilder
     const payload = {
       code,
       instructions,
@@ -241,15 +235,14 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
         .json({ message: "DocBuilder error", detail: resp.data });
     }
 
-    // Save the complete history record
     await History.create({
       userId: req.user.id,
       fileName: file.originalname,
       format: format,
-      parseInfo: parseInfo, // Save parsed info
-      projectInfo: projectInfoPayload, // Save generated prompt
-      umlInstructions: umlInstructionsPayload, // Save generated prompt
-      generatedFiles: resp.data, // Save the filenames from the response
+      parseInfo: parseInfo,
+      projectInfo: projectInfoPayload,
+      umlInstructions: umlInstructionsPayload,
+      generatedFiles: resp.data,
     });
 
     res.json(resp.data);
@@ -263,7 +256,7 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
-// History and Download Endpoints
+// History and Download Endpoints (unchanged)
 app.get("/history", auth, async (req, res) => {
   try {
     const history = await History.find({ userId: req.user.id }).sort({
@@ -315,5 +308,18 @@ app.get("/download/:filetype/:filename", auth, async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
-// Start server
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// --- MODIFICATION 3: ROBUST SERVER STARTUP ---
+// Connect to MongoDB first, and only start the server if the connection is successful.
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("🟢 MongoDB connected successfully.");
+    // Start the Express server only after a successful connection
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    // If the connection fails, log the error and do not start the server.
+    // This makes debugging connection issues in production much easier.
+    console.error("🔴 MongoDB connection error. Server will not start.", err);
+    process.exit(1); // Exit the process with an error code
+  });
