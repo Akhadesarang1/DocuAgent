@@ -1,4 +1,4 @@
-// server.js (Updated)
+// server.js (Corrected)
 
 require("dotenv").config();
 const express = require("express");
@@ -51,18 +51,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // -----------------------------------------------------------------------------
-// --- MODIFICATION 1: UPDATED USER SCHEMA ---
-// The User schema now includes a 'name' field to store the user's full name,
-// which is sent from the frontend as 'username'.
+// --- User and History Schemas ---
 const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // Added this line
+  name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   passwordHash: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 const User = mongoose.model("User", UserSchema);
 
-// --- History schema (unchanged) ---
 const HistorySchema = new mongoose.Schema({
   userId: String,
   fileName: String,
@@ -80,7 +77,7 @@ const HistorySchema = new mongoose.Schema({
 const History = mongoose.model("History", HistorySchema);
 
 // -----------------------------------------------------------------------------
-// Auth middleware (unchanged)
+// Auth middleware
 const auth = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -94,11 +91,8 @@ const auth = (req, res, next) => {
 };
 
 // -----------------------------------------------------------------------------
-// --- MODIFICATION 2: UPDATED SIGNUP ENDPOINT ---
-// The endpoint now expects 'username' in the request body to match the frontend.
-// It validates all three fields (username, email, password).
+// --- User Authentication Endpoints ---
 app.post("/signup", async (req, res) => {
-  // Destructure 'username' along with email and password
   const { username, email, password } = req.body;
   if (!username || !email || !password)
     return res.status(400).json({ message: "Username, email, and password are required" });
@@ -108,7 +102,6 @@ app.post("/signup", async (req, res) => {
     return res.status(409).json({ message: "Email already registered" });
 
   const passwordHash = await bcrypt.hash(password, 10);
-  // Save the 'username' to the 'name' field in the database
   const user = await User.create({ name: username, email, passwordHash });
   const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
     expiresIn: "7d",
@@ -116,7 +109,6 @@ app.post("/signup", async (req, res) => {
   res.status(201).json({ message: "User created", token });
 });
 
-// Login endpoint (unchanged)
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -131,19 +123,18 @@ app.post("/login", async (req, res) => {
   res.json({ message: "Logged in", token });
 });
 
-// Auth me endpoint (unchanged)
 app.get("/auth/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-passwordHash");
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ name: user.name }); // Now correctly sends the user's name
+    res.json({ name: user.name });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // -----------------------------------------------------------------------------
-// Multer setup (unchanged)
+// --- File Handling and Code Parsing ---
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (_, file, cb) =>
@@ -152,7 +143,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 
-// --- Code parsing and prompt building logic (unchanged) ---
 function parseCode(code, ext) {
   const parser = new Parser();
   try {
@@ -176,23 +166,8 @@ function parseCode(code, ext) {
   }
 }
 
-const PROJECT_INFO_PROMPT = `You are a documentation builder.
-Analyze the code and user instructions, then output a JSON object with a 'project_info' field summarizing:
-- Purpose
-- Key modules/classes/functions
-- Data models or entities
-`;
-const UML_INSTRUCTIONS_PROMPT = `You are a UML generation assistant.
-Given the code and user instructions, output a JSON object with a 'uml_instructions' field describing which UML diagrams to generate (e.g., class, sequence, component) and key elements for each.
-`;
-function buildProjectInfoPrompt(code, instructions) {
-  return `${PROJECT_INFO_PROMPT}\nCode:\n${code}\nInstructions:\n${instructions}`;
-}
-function buildUmlInstructionsPrompt(code, instructions) {
-  return `${UML_INSTRUCTIONS_PROMPT}\nCode:\n${code}\nInstructions:\n${instructions}`;
-}
-
-// --- /generate endpoint (unchanged) ---
+// -----------------------------------------------------------------------------
+// --- Document Generation Endpoint (Corrected) ---
 app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
   try {
     const {
@@ -209,19 +184,17 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
       code,
       path.extname(file.originalname).toLowerCase()
     );
-    const projectInfoPayload = buildProjectInfoPrompt(code, instructions);
-    const umlInstructionsPayload = buildUmlInstructionsPrompt(
-      code,
-      instructions
-    );
 
+    // --- FIX: Use raw user instructions directly in the payload ---
+    // The downstream microservices are designed to build their own prompts
+    // using these raw instructions. Passing pre-built prompts was causing errors.
     const payload = {
       code,
       instructions,
       format,
-      abstract: projectInfoPayload,
-      project_info: projectInfoPayload,
-      uml_instructions: umlInstructionsPayload,
+      abstract: instructions,
+      project_info: instructions,
+      uml_instructions: instructions,
     };
 
     const resp = await axios.post(
@@ -240,8 +213,8 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
       fileName: file.originalname,
       format: format,
       parseInfo: parseInfo,
-      projectInfo: projectInfoPayload,
-      umlInstructions: umlInstructionsPayload,
+      projectInfo: instructions,      // Store raw instructions for history
+      umlInstructions: instructions,  // Store raw instructions for history
       generatedFiles: resp.data,
     });
 
@@ -256,7 +229,7 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
-// History and Download Endpoints (unchanged)
+// History and Download Endpoints
 app.get("/history", auth, async (req, res) => {
   try {
     const history = await History.find({ userId: req.user.id }).sort({
@@ -308,18 +281,14 @@ app.get("/download/:filetype/:filename", auth, async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
-// --- MODIFICATION 3: ROBUST SERVER STARTUP ---
-// Connect to MongoDB first, and only start the server if the connection is successful.
+// --- Robust Server Startup ---
 mongoose
   .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log("🟢 MongoDB connected successfully.");
-    // Start the Express server only after a successful connection
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => {
-    // If the connection fails, log the error and do not start the server.
-    // This makes debugging connection issues in production much easier.
     console.error("🔴 MongoDB connection error. Server will not start.", err);
-    process.exit(1); // Exit the process with an error code
+    process.exit(1);
   });
