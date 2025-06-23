@@ -184,7 +184,7 @@ def build_document():
     section = doc.sections[0]
     footer = section.footer
     p = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
-    p.text = "GenDocAI | Confidential\t"
+    p.text = " DocuAgent | Confidential\t"
     run = p.add_run()
     fldChar1 = OxmlElement('w:fldChar')
     fldChar1.set(qn('w:fldCharType'), 'begin')
