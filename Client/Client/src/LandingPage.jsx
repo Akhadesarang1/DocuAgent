@@ -78,8 +78,13 @@ const LandingPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      axios.get('/user/profile', { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => { setUser(res.data); setIsAuthenticated(true); })
+      // FIX: Changed endpoint from '/user/profile' to '/auth/me'
+      axios.get('https://mainserver-kpei.onrender.com/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => { 
+          // The server sends back { name: '...' }, so we should adapt the state.
+          setUser({ username: res.data.name, email: '' }); // Assuming email is not sent from this endpoint.
+          setIsAuthenticated(true); 
+        })
         .catch(() => setIsAuthenticated(false));
     }
   }, []);
