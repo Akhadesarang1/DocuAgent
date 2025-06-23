@@ -124,7 +124,7 @@ const HistoryPage = () => {
     }
   };
 
-  const handleDownload = (item) => {
+   const handleDownload = (item) => {
     const fileType = item.format;
     const filename = item.generatedFiles?.[fileType];
 
@@ -132,19 +132,36 @@ const HistoryPage = () => {
       alert("Download information not available for this item.");
       return;
     }
+    
+    // FIX: Replaced the simple link creation with a robust, authenticated fetch request.
+    const downloadUrl = `https://mainserver-kpei.onrender.com/download/${fileType}/${filename}`;
+    const authToken = localStorage.getItem("token");
 
-    const url = `https://mainserver-kpei.onrender.com/${fileType}/${filename}`;
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    // Add the token to the URL for simple GET request authentication
-    const token = localStorage.getItem("token");
-    link.href = `${url}?token=${token}`; // A simple way for GET auth if needed, but our proxy handles it.
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    fetch(downloadUrl, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Server responded with ${res.status}`);
+      }
+      return res.blob();
+    })
+    .then((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch((err) => {
+      console.error("Download error:", err);
+      alert("Download failed. Please ensure you are logged in.");
+    });
   };
 
   return (
