@@ -116,7 +116,7 @@ Use the following to generate a **Markdown** technical report of approximately {
 
 Produce only the final well-structured Markdown text with bolded headings, numbered sections, and consistent formatting.
 """
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     response = model.generate_content(full_prompt)
     return response.text.strip()
 
