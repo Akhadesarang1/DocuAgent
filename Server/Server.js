@@ -26,7 +26,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret";
 const DOC_BUILDER_URL = process.env.DOC_BUILDER_URL || "http://localhost:5002";
 
 // -----------------------------------------------------------------------------
-// Initialize Express app & middleware
+// Initialize Express app as well as middleware
 const app = express();
 app.use(express.json());
 
