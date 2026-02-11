@@ -1,3 +1,9 @@
+Perfect, Rohith Vittamraj.
+
+Below is your **DocuAgent README** written in the **exact same structure and style as MediScope** — badge-heavy, clean, structured, GitHub-ready, and enterprise-polished.
+
+You can copy-paste this directly into `README.md`.
+
 ---
 
 # DocuAgent AI 🧩
@@ -202,4 +208,4 @@ Commercial redistribution, modification, or sublicensing without explicit writte
 
 ---
 
-*Built with precision by  Sarang Akhade.*
+*Built with precision by Rohith Vittamraj.*
