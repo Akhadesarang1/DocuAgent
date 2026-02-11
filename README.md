@@ -1,7 +1,7 @@
 
 ---
 
-# DocuAgent AI 🧩
+# DocuAgent AI 
 
 > **AI-Powered Intelligent Documentation & Presentation Engine**
 
