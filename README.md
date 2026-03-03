@@ -20,19 +20,19 @@ Built for professionals, researchers, and enterprises, DocuAgent eliminates manu
 
 ---
 
-## 🚀 Features
+## Features
 
-* **📄 Automated Document Generation**: Convert rough notes into structured, publication-ready reports.
-* **📊 AI Slide Deck Creator**: Instantly generate clean, hierarchy-driven presentation slides (PPTX).
-* **🧩 Diagram Interpretation Engine**: Extract relationships and convert diagrams into textual explanations.
-* **📑 Multi-Format Output**: Generate Reports, PDFs, PPTX, and structured outlines from a single input.
-* **⚡ Unified Processing Pipeline**: One input → multiple professional outputs.
-* **🔐 Structured Workflow Engine**: Clean architecture ensuring scalable document generation.
-* **☁️ Cloud-Ready Deployment**: Designed for containerized and scalable environments.
+* ** Automated Document Generation**: Convert rough notes into structured, publication-ready reports.
+* ** AI Slide Deck Creator**: Instantly generate clean, hierarchy-driven presentation slides (PPTX).
+* ** Diagram Interpretation Engine**: Extract relationships and convert diagrams into textual explanations.
+* ** Multi-Format Output**: Generate Reports, PDFs, PPTX, and structured outlines from a single input.
+* ** Unified Processing Pipeline**: One input → multiple professional outputs.
+* ** Structured Workflow Engine**: Clean architecture ensuring scalable document generation.
+* ** Cloud-Ready Deployment**: Designed for containerized and scalable environments.
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 * **Frontend**: React (Vite), Tailwind CSS
 * **Gateway Layer**: Node.js, Express
@@ -44,7 +44,7 @@ Built for professionals, researchers, and enterprises, DocuAgent eliminates manu
 
 ---
 
-## 📦 Project Structure
+##  Project Structure
 
 ```bash
 DOCUAGENT/
@@ -68,7 +68,7 @@ DOCUAGENT/
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 ### Prerequisites
 
@@ -79,7 +79,7 @@ DOCUAGENT/
 
 ---
 
-### 1️⃣ Clone & Install
+###  Clone & Install
 
 ```bash
 git clone https://github.com/your-username/docuagent.git
@@ -89,7 +89,7 @@ npm run install-all
 
 ---
 
-### 2️⃣ Configure Environment
+###  Configure Environment
 
 Create a `.env` file inside `Server/`:
 
@@ -102,7 +102,7 @@ NODE_ENV=development
 
 ---
 
-### 3️⃣ Run Locally
+###  Run Locally
 
 ```bash
 npm run build
@@ -117,7 +117,7 @@ http://localhost:5000
 
 ---
 
-## ☁️ Deployment Guide (Render / Docker)
+##  Deployment Guide (Render / Docker)
 
 DocuAgent is built for zero-friction deployment.
 
@@ -143,23 +143,23 @@ docker run -p 5000:5000 docuagent
 
 ---
 
-## 🧠 Architecture Overview
+##  Architecture Overview
 
 DocuAgent follows a modular microservice design:
 
-### 🔹 AI Understanding Layer
+###  AI Understanding Layer
 
 * Semantic parsing
 * Structural hierarchy mapping
 * Diagram relationship extraction
 
-### 🔹 Processing Engine
+###  Processing Engine
 
 * Document skeleton builder
 * Slide hierarchy constructor
 * Multi-format rendering modules
 
-### 🔹 Output Pipeline
+###  Output Pipeline
 
 * Report Compiler
 * PPTX Generator
@@ -167,17 +167,17 @@ DocuAgent follows a modular microservice design:
 
 ---
 
-## 📊 Use Cases
+##  Use Cases
 
-* 🏢 Corporate reporting automation
-* 🎓 Academic documentation
-* 📚 Student project structuring
-* 🧑‍💼 Consultant deliverables
-* 📊 Data-to-presentation workflows
+*  Corporate reporting automation
+*  Academic documentation
+*  Student project structuring
+*  Consultant deliverables
+*  Data-to-presentation workflows
 
 ---
 
-## 🌍 Vision
+##  Vision
 
 DocuAgent AI aims to transform documentation from a manual bottleneck into an intelligent automation layer capable of producing structured, scalable, and enterprise-ready outputs.
 
@@ -190,7 +190,7 @@ Future roadmap includes:
 
 ---
 
-## 🛡️ License
+##  License
 
 Copyright (c) 2026 Sarang Akhade
 
