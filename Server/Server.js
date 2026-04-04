@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 3001;
 const MONGO_URI =
   process.env.MONGO_URI || "mongodb://localhost:27017/gendocai_db";
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
-const DOC_BUILDER_URL = process.env.DOC_BUILDER_URL || "http://localhost:5002";
+const DOC_BUILDER_URL = process.env.DOC_BUILDER_URL || "http://localhost:5002"; 
 
 // -----------------------------------------------------------------------------
 // Initialize Express app as well as middleware
