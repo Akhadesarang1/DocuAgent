@@ -8,7 +8,7 @@ const path = require("path");
 const axios = require("axios");
 const cors = require("cors"); 
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken"); 
 const { v4: uuidv4 } = require("uuid");
 
 // Tree‑sitter setup for parsing
