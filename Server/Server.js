@@ -2,7 +2,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose"); 
-const multer = require("multer");  
+const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios"); 
