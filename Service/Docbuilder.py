@@ -13,7 +13,6 @@ from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_BREAK
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
-
 from pptx import Presentation
 from pptx.util import Inches as PPTInches, Pt as PPTPt
 from pptx.enum.text import PP_PARAGRAPH_ALIGNMENT
