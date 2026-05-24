@@ -5,7 +5,6 @@ import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa"
 import { motion } from "framer-motion";
 // --- FIX 1 of 2: Import 'Link' for client-side navigation ---
 import { useNavigate, Link } from "react-router-dom";
-
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
