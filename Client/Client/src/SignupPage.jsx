@@ -3,7 +3,6 @@ import axios from 'axios';
 import { FaGoogle, FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
 import { FiEye, FiEyeOff, FiUserPlus, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-
 export default function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
