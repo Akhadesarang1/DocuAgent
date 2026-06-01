@@ -11,13 +11,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 
-
-
-
-
-
-
-
 // Tree‑sitter setup for parsing
 const Parser = require("node-tree-sitter");
 const JavaScript = require("tree-sitter-javascript");  
