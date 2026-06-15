@@ -1,12 +1,5 @@
 # Aigenerator Service
 
-
-
-
-
-
-
-
 import os
 import logging
 import ast
