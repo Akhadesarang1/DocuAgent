@@ -67,7 +67,7 @@ export default function SignupPage() {
           password: formData.password,
         };
         const response = await axios.post(
-          'https://mainserver-kpei.onrender.com/signup',
+          '/api/signup',
           payload,
           {
             headers: { 'Content-Type': 'application/json' },

@@ -78,7 +78,7 @@ const LandingPage = () => {
     const token = localStorage.getItem('token');
     if (token) {
       // FIX: Changed endpoint from '/user/profile' to '/auth/me'
-      axios.get('https://mainserver-kpei.onrender.com/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(res => { 
           // The server sends back { name: '...' }, so we should adapt the state.
           setUser({ username: res.data.name, email: '' }); // Assuming email is not sent from this endpoint.

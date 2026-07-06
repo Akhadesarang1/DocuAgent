@@ -33,7 +33,7 @@ export default function LoginPage() {
     try {
       // This API call is correct for the login itself.
       const response = await axios.post(
-        "https://mainserver-kpei.onrender.com/login",
+        "/api/login",
         {
           email: formData.email,
           password: formData.password,

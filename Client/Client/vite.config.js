@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // Proxy any requests starting with /api to http://localhost:3001
       '/api': {
-        target: 'https://mainserver-kpei.onrender.com',
+        target: 'http://localhost:3001',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

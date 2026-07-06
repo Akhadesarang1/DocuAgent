@@ -53,6 +53,16 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// In production the built SPA calls /api/* on this same origin (no Vite proxy
+// to rewrite it), so strip the /api prefix to reach the routes defined below.
+if (process.env.NODE_ENV === "production") {
+  app.use((req, _res, next) => {
+    if (req.url === "/api") req.url = "/";
+    else if (req.url.startsWith("/api/")) req.url = req.url.slice(4);
+    next();
+  });
+}
+
 // -----------------------------------------------------------------------------
 // --- User and History Schemas ---
 const UserSchema = new mongoose.Schema({
@@ -282,6 +292,17 @@ app.get("/download/:filetype/:filename", auth, async (req, res) => {
     res.status(status).json({ error: "Could not download file." });
   }
 });
+
+// -----------------------------------------------------------------------------
+// --- Production: serve the built Client with SPA fallback ---
+if (process.env.NODE_ENV === "production") {
+  const clientBuild = path.join(__dirname, "..", "Client", "Client", "dist");
+  app.use(express.static(clientBuild));
+  // Any non-API GET falls back to index.html so client-side routing works.
+  app.get(/.*/, (_req, res) => {
+    res.sendFile(path.join(clientBuild, "index.html"));
+  });
+}
 
 // -----------------------------------------------------------------------------
 // --- Error handling middleware ---

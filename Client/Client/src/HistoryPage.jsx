@@ -84,7 +84,7 @@ const HistoryPage = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       try {
         const { data: history } = await axios.get(
-          "https://mainserver-kpei.onrender.com/history",
+          "/api/history",
           config
         );
         setHistoryItems(history);
@@ -97,7 +97,7 @@ const HistoryPage = () => {
       }
       try {
         const { data: userData } = await axios.get(
-          "https://mainserver-kpei.onrender.com/auth/me",
+          "/api/auth/me",
           config
         );
         setUser(userData);
@@ -113,7 +113,7 @@ const HistoryPage = () => {
     const original = [...historyItems];
     setHistoryItems(historyItems.filter((item) => item._id !== id));
     try {
-      await axios.delete(`https://mainserver-kpei.onrender.com/history/${id}`, {
+      await axios.delete(`/api/history/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
     } catch (err) {
@@ -133,7 +133,7 @@ const HistoryPage = () => {
     }
     
     // FIX: Replaced the simple link creation with a robust, authenticated fetch request.
-    const downloadUrl = `https://mainserver-kpei.onrender.com/download/${fileType}/${filename}`;
+    const downloadUrl = `/api/download/${fileType}/${filename}`;
     const authToken = localStorage.getItem("token");
 
     fetch(downloadUrl, {
