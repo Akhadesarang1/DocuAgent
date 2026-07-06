@@ -157,7 +157,10 @@ def generate_docx_from_text(text: str):
 # ── API Endpoint ──
 @app.route("/generate-doc", methods=["POST"])
 def generate_doc():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not isinstance(data, dict):
+        logging.error("Request body is missing or not valid JSON")
+        return jsonify({"error": "Request body must be valid JSON"}), 400
     logging.info(f"Received POST data keys: {list(data.keys())}")
 
     file_path     = data.get("file_path")

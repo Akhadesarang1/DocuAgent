@@ -6,16 +6,20 @@ import uuid
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
-from docx2pdf import convert
 from PIL import Image
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_BREAK
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
-from pptx import Presentation
-from pptx.util import Inches as PPTInches, Pt as PPTPt
-from pptx.enum.text import PP_PARAGRAPH_ALIGNMENT
+
+# PDF generation via reportlab — no MS Word dependency, works on Linux/Docker/Render
+import re
+from xml.sax.saxutils import escape
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Preformatted
 
 # ── Load env ──
 load_dotenv()
@@ -62,6 +66,77 @@ def set_shading_for_paragraph(paragraph, fill_color):
     shd.set(qn('w:color'), 'auto')
     shd.set(qn('w:fill'), fill_color)
     p_pr.append(shd)
+
+# ── Inline markdown (**bold** / *italic*) ──
+_INLINE_MD_RE = re.compile(r'\*\*(.+?)\*\*|\*(.+?)\*')
+
+def parse_inline_md(text):
+    """Split a line into (text, bold, italic) segments, honouring **bold** and *italic*."""
+    segments = []
+    pos = 0
+    for m in _INLINE_MD_RE.finditer(text):
+        if m.start() > pos:
+            segments.append((text[pos:m.start()], False, False))
+        if m.group(1) is not None:      # **bold**
+            segments.append((m.group(1), True, False))
+        else:                            # *italic*
+            segments.append((m.group(2), False, True))
+        pos = m.end()
+    if pos < len(text):
+        segments.append((text[pos:], False, False))
+    return segments or [(text, False, False)]
+
+def _inline_to_rl(text):
+    """Convert inline markdown to reportlab Paragraph markup, XML-escaping first."""
+    out = []
+    for seg_text, bold, italic in parse_inline_md(text):
+        chunk = escape(seg_text)
+        if bold:
+            chunk = f"<b>{chunk}</b>"
+        if italic:
+            chunk = f"<i>{chunk}</i>"
+        out.append(chunk)
+    return "".join(out)
+
+def generate_pdf(raw_md, pdf_path):
+    """Render markdown to a PDF using reportlab (cross-platform, no MS Word)."""
+    styles = getSampleStyleSheet()
+    doc = SimpleDocTemplate(
+        pdf_path, pagesize=A4,
+        leftMargin=0.9 * inch, rightMargin=0.9 * inch,
+        topMargin=0.9 * inch, bottomMargin=0.9 * inch,
+    )
+    story = []
+    in_code = False
+    code_lines = []
+    for line in raw_md.splitlines():
+        if line.strip().startswith('```'):
+            if in_code and code_lines:
+                story.append(Preformatted("\n".join(code_lines), styles['Code']))
+                story.append(Spacer(1, 6))
+                code_lines = []
+            in_code = not in_code
+            continue
+        if in_code:
+            code_lines.append(line)
+            continue
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith('# '):
+            story.append(Paragraph(_inline_to_rl(s[2:].strip()), styles['Heading1']))
+        elif s.startswith('## '):
+            story.append(Paragraph(_inline_to_rl(s[3:].strip()), styles['Heading2']))
+        elif s.startswith('### '):
+            story.append(Paragraph(_inline_to_rl(s[4:].strip()), styles['Heading3']))
+        else:
+            story.append(Paragraph(_inline_to_rl(s), styles['BodyText']))
+            story.append(Spacer(1, 4))
+    if in_code and code_lines:
+        story.append(Preformatted("\n".join(code_lines), styles['Code']))
+    if not story:
+        story.append(Paragraph("No content generated.", styles['BodyText']))
+    doc.build(story)
 
 # ── Proxy to UML Agent ──
 @app.route('/generate-uml', methods=['POST'])
@@ -220,7 +295,11 @@ def build_document():
         elif clean_line.startswith('### '):
             doc.add_heading(clean_line[4:].strip(), level=3)
         elif clean_line:
-            p = doc.add_paragraph(clean_line.replace('*', ''))
+            p = doc.add_paragraph()
+            for seg_text, bold, italic in parse_inline_md(clean_line):
+                run = p.add_run(seg_text)
+                run.bold = bold
+                run.italic = italic
             p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
             p.paragraph_format.space_after = Pt(8)
 
@@ -258,11 +337,9 @@ def build_document():
     ts        = int(time.time())
     docx_file = f"combined_{ts}.docx"
     pdf_file  = f"combined_{ts}.pdf"
-    pptx_file = f"combined_{ts}.pptx"
 
     docx_path = os.path.join(EXPORT_DIR, docx_file)
     pdf_path  = os.path.join(EXPORT_DIR, pdf_file)
-    pptx_path = os.path.join(EXPORT_DIR, pptx_file)
 
     try:
         doc.save(docx_path)
@@ -271,27 +348,18 @@ def build_document():
         log.error("DOCX save failed: %s", e)
         return jsonify({"error":"DOCX save failed"}), 500
 
-    if os.path.exists(docx_path) and os.path.getsize(docx_path) > 1000:
-        try:
-            convert(docx_path, pdf_path)
-            log.info("PDF saved → %s", pdf_path)
-        except Exception as e:
-            log.error("PDF conversion failed: %s", e)
-
-    # Note: PPTX generation is not implemented yet
-    prs = Presentation()
+    # PDF is rendered straight from the markdown via reportlab — no MS Word needed.
     try:
-        prs.save(pptx_path)
-        log.info("PPTX (empty) saved → %s", pptx_path)
+        generate_pdf(raw_md, pdf_path)
+        log.info("PDF saved → %s", pdf_path)
     except Exception as e:
-        log.error("PPTX failed: %s", e)
+        log.error("PDF generation failed: %s", e)
 
     log.info("Completed build %s in %.2fs", build_id, time.time() - start)
 
     response_data = { "diagrams_count": len(diagram_specs) }
     if os.path.exists(docx_path): response_data["docx"] = docx_file
     if os.path.exists(pdf_path): response_data["pdf"] = pdf_file
-    if os.path.exists(pptx_path): response_data["pptx"] = pptx_file
 
     return jsonify(response_data), 200
 

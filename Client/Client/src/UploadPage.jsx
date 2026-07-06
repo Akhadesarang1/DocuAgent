@@ -17,7 +17,6 @@ import {
   FiCheck,
   FiDownload,
   FiFile,
-  FiFilePlus,
   FiFileText,
   FiHelpCircle,
   FiLayout,
@@ -44,6 +43,7 @@ const UploadPage = ({ onBackToLanding }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
   const [authMode, setAuthMode] = useState("login");
+  const [authUsername, setAuthUsername] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -193,6 +193,7 @@ const UploadPage = ({ onBackToLanding }) => {
   const handleSignup = async () => {
     try {
       const response = await axios.post("/api/signup", {
+        username: authUsername,
         email: authEmail,
         password: authPassword,
       });
@@ -209,6 +210,7 @@ const UploadPage = ({ onBackToLanding }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken("");
+    setAuthUsername("");
     setShowAuthDropdown(false);
   };
 
@@ -281,12 +283,6 @@ const UploadPage = ({ onBackToLanding }) => {
       label: "PDF",
       icon: <FiFile />,
       desc: "Universal document format",
-    },
-    {
-      id: "pptx",
-      label: "PPTX",
-      icon: <FiFilePlus />,
-      desc: "Presentation format",
     },
   ];
 
@@ -433,6 +429,15 @@ const UploadPage = ({ onBackToLanding }) => {
                       </motion.div>
                     )}
                     <div className="space-y-3">
+                      {authMode === "signup" && (
+                        <input
+                          type="text"
+                          value={authUsername}
+                          onChange={(e) => setAuthUsername(e.target.value)}
+                          placeholder="Username"
+                          className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-white"
+                        />
+                      )}
                       <input
                         type="email"
                         value={authEmail}
