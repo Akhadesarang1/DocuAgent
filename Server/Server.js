@@ -21,7 +21,11 @@ const Python = require("tree-sitter-python");
 const PORT = process.env.PORT || 3001;
 const MONGO_URI =
   process.env.MONGO_URI || "mongodb://localhost:27017/gendocai_db";
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("FATAL: JWT_SECRET environment variable is not set.");
+  process.exit(1);
+}
 const DOC_BUILDER_URL = process.env.DOC_BUILDER_URL || "http://localhost:5002"; 
 
 // -----------------------------------------------------------------------------
@@ -139,7 +143,7 @@ const storage = multer.diskStorage({
   filename: (_, file, cb) =>
     cb(null, uuidv4() + path.extname(file.originalname)),
 });
-const upload = multer({ storage });
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 
 function parseCode(code, ext) {
@@ -277,6 +281,24 @@ app.get("/download/:filetype/:filename", auth, async (req, res) => {
     const status = err.response ? err.response.status : 500;
     res.status(status).json({ error: "Could not download file." });
   }
+});
+
+// -----------------------------------------------------------------------------
+// --- Error handling middleware ---
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(413)
+        .json({ message: "File too large. Maximum upload size is 5MB." });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+  if (err) {
+    console.error("Unhandled error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+  next();
 });
 
 // -----------------------------------------------------------------------------
