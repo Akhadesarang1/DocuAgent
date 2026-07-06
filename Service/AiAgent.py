@@ -234,5 +234,5 @@ def generate_doc():
         return jsonify({"error": f"Unsupported format: {return_format}"}), 400
 
 if __name__ == "__main__":
-    port = int(os.environ["PORT"])
+    port = int(os.getenv("PORT", 5001))
     app.run(host="0.0.0.0", port=port, debug=False)

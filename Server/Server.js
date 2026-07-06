@@ -282,7 +282,7 @@ app.get("/download/:filetype/:filename", auth, async (req, res) => {
 // -----------------------------------------------------------------------------
 // --- Robust Server Startup ---
 mongoose
-  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(MONGO_URI)
   .then(() => {
     console.log("🟢 MongoDB connected successfully.");
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

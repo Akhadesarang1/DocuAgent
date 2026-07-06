@@ -91,14 +91,30 @@ npm run install-all
 
 ###  Configure Environment
 
-Create a `.env` file inside `Server/`:
+Copy the provided `.env.example` files and fill in your values.
+
+**`Server/.env`** (Node.js gateway):
 
 ```properties
-PORT=5000
-LLM_API_KEY=your_api_key
-MONGO_URI=your_mongodb_connection_string
+PORT=3001
+MONGO_URI=mongodb://localhost:27017/gendocai_db
+JWT_SECRET=change_me_to_a_long_random_string
+DOC_BUILDER_URL=http://localhost:5002
 NODE_ENV=development
 ```
+
+**`Service/.env`** (Python services):
+
+```properties
+GEMINI_API_KEY=your_gemini_api_key
+PORT=5001
+DOCBUILDER_URL=http://localhost:5002
+PARENT_AGENT_URL=http://localhost:5001
+UML_AGENT_URL=http://localhost:5003
+STATIC_DIR=static
+```
+
+> `JWT_SECRET` is required — the server exits on startup if it is missing.
 
 ---
 

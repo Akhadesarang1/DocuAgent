@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Environment files (keep .env.example tracked)
+.env
+*/.env
+
+# Version artifacts (accidental pip/npm redirect output)
+0.5.1
+1.26.0
+
+# Generated output directories
+Server/uploads/
+Service/exports/
+Service/static/
+Service/saved_docs/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
