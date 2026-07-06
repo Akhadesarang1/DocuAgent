@@ -11,11 +11,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 
-// Tree‑sitter setup for parsing
-const Parser = require("node-tree-sitter");
-const JavaScript = require("tree-sitter-javascript");  
-const Python = require("tree-sitter-python");
-
 // -----------------------------------------------------------------------------
 // Load environment variables
 const PORT = process.env.PORT || 3001;
@@ -77,7 +72,6 @@ const HistorySchema = new mongoose.Schema({
   userId: String,
   fileName: String,
   format: String,
-  parseInfo: Object,
   projectInfo: String,
   umlInstructions: String,
   generatedFiles: {
@@ -156,29 +150,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 
-function parseCode(code, ext) {
-  const parser = new Parser();
-  try {
-    if (ext === ".js" || ext === ".jsx") parser.setLanguage(JavaScript);
-    else if (ext === ".py") parser.setLanguage(Python);
-    else return { functions: [], classes: [], lines: code.split("\n").length };
-    const tree = parser.parse(code);
-    const root = tree.rootNode;
-    const functions = [],
-      classes = [];
-    root.namedChildren.forEach((node) => {
-      if (node.type.includes("function"))
-        functions.push(node.childForFieldName("name")?.text || "<anonymous>");
-      if (node.type.includes("class"))
-        classes.push(node.childForFieldName("name")?.text || "<anonymous>");
-    });
-    return { functions, classes, lines: code.split("\n").length };
-  } catch (err) {
-    console.error("Parsing error:", err);
-    return { error: err.message };
-  }
-}
-
 // -----------------------------------------------------------------------------
 // --- Document Generation Endpoint (Corrected) ---
 app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
@@ -193,10 +164,6 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
         .json({ message: "File and instructions required" });
 
     const code = fs.readFileSync(file.path, "utf8");
-    const parseInfo = parseCode(
-      code,
-      path.extname(file.originalname).toLowerCase()
-    );
 
     // --- FIX: Use raw user instructions directly in the payload ---
     // The downstream microservices are designed to build their own prompts
@@ -225,7 +192,6 @@ app.post("/generate", auth, upload.single("inputFile"), async (req, res) => {
       userId: req.user.id,
       fileName: file.originalname,
       format: format,
-      parseInfo: parseInfo,
       projectInfo: instructions,      // Store raw instructions for history
       umlInstructions: instructions,  // Store raw instructions for history
       generatedFiles: resp.data,
@@ -296,7 +262,7 @@ app.get("/download/:filetype/:filename", auth, async (req, res) => {
 // -----------------------------------------------------------------------------
 // --- Production: serve the built Client with SPA fallback ---
 if (process.env.NODE_ENV === "production") {
-  const clientBuild = path.join(__dirname, "..", "Client", "Client", "dist");
+  const clientBuild = path.join(__dirname, "..", "Client", "dist");
   app.use(express.static(clientBuild));
   // Any non-API GET falls back to index.html so client-side routing works.
   app.get(/.*/, (_req, res) => {
