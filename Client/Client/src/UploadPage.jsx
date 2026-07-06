@@ -37,6 +37,7 @@ const UploadPage = ({ onBackToLanding }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [generationPhase, setGenerationPhase] = useState(""); // "uploading" | "processing"
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipContent, setTooltipContent] = useState("");
   const [error, setError] = useState("");
@@ -134,6 +135,7 @@ const UploadPage = ({ onBackToLanding }) => {
 
     setIsGenerating(true);
     setProgress(0);
+    setGenerationPhase("uploading");
     setIsGenerated(false);
     setError("");
     setDownloadInfo(null);
@@ -158,6 +160,12 @@ const UploadPage = ({ onBackToLanding }) => {
               (progressEvent.loaded * 100) / progressEvent.total
             );
             setProgress(percentCompleted);
+            // Once the upload finishes, the server hands off to the multi-minute
+            // AI step. Switch to an indeterminate "processing" phase so the bar
+            // no longer looks frozen at 100%.
+            if (percentCompleted >= 100) {
+              setGenerationPhase("processing");
+            }
           },
         }
       );
@@ -171,6 +179,7 @@ const UploadPage = ({ onBackToLanding }) => {
     } finally {
       setIsGenerating(false);
       setProgress(0);
+      setGenerationPhase("");
     }
   };
 
@@ -526,7 +535,7 @@ const UploadPage = ({ onBackToLanding }) => {
                     className="text-xl font-semibold text-white flex items-center"
                   >
                     <FiUpload className="mr-2 text-indigo-400" />
-                    Upload Your Files
+                    Upload Your File
                     <span className="text-red-500 ml-1">*</span>
                   </motion.h2>
                   <motion.button
@@ -575,7 +584,7 @@ const UploadPage = ({ onBackToLanding }) => {
                   <FiUpload className="mx-auto text-3xl text-indigo-400 mb-3" />
                   <p className="text-gray-400 mb-2">
                     <span className="text-indigo-400 font-medium">
-                      Drag & Drop your files
+                      Drag & Drop your file
                     </span>{" "}
                     or <span className="text-indigo-400">browse</span>
                   </p>
@@ -587,7 +596,6 @@ const UploadPage = ({ onBackToLanding }) => {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileChange}
-                    multiple
                     className="hidden"
                     accept=".py,.js,.jsx,.java,.php,.html,.css,.ts,.json,.txt"
                     required
@@ -609,7 +617,7 @@ const UploadPage = ({ onBackToLanding }) => {
                     className="mt-4"
                   >
                     <h3 className="text-md font-medium text-gray-400 mb-3">
-                      Uploaded Files ({files.length})
+                      Uploaded File
                     </h3>
                     <div className="flex flex-wrap gap-3">
                       {files.map((file, index) => (
@@ -807,7 +815,9 @@ const UploadPage = ({ onBackToLanding }) => {
                       >
                         <FiZap className="text-white" />
                       </motion.div>
-                      Generating... {progress}%
+                      {generationPhase === "uploading"
+                        ? `Uploading... ${progress}%`
+                        : "Generating..."}
                     </span>
                   ) : isGenerated ? (
                     <span className="flex items-center">
@@ -820,14 +830,26 @@ const UploadPage = ({ onBackToLanding }) => {
                       Generate Documentation
                     </span>
                   )}
-                  {isGenerating && (
-                    <motion.div
-                      className="absolute bottom-0 left-0 h-1 bg-indigo-500"
-                      initial={{ width: "0%" }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ duration: 0.5 }}
-                    ></motion.div>
-                  )}
+                  {isGenerating &&
+                    (generationPhase === "processing" ? (
+                      <motion.div
+                        className="absolute bottom-0 left-0 h-1 bg-indigo-500"
+                        initial={{ width: "15%", x: "-100%" }}
+                        animate={{ x: ["-100%", "700%"] }}
+                        transition={{
+                          duration: 1.2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      ></motion.div>
+                    ) : (
+                      <motion.div
+                        className="absolute bottom-0 left-0 h-1 bg-indigo-500"
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.5 }}
+                      ></motion.div>
+                    ))}
                 </motion.button>
               </div>
             </form>
@@ -839,19 +861,35 @@ const UploadPage = ({ onBackToLanding }) => {
               >
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-gray-400">
-                    Processing files...
+                    {generationPhase === "processing"
+                      ? "AI is generating your documentation. This can take a few minutes..."
+                      : "Uploading files..."}
                   </span>
-                  <span className="text-sm text-indigo-400 font-medium">
-                    {progress}%
-                  </span>
+                  {generationPhase === "uploading" && (
+                    <span className="text-sm text-indigo-400 font-medium">
+                      {progress}%
+                    </span>
+                  )}
                 </div>
                 <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                  <motion.div
-                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full"
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5 }}
-                  ></motion.div>
+                  {generationPhase === "processing" ? (
+                    <motion.div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full w-1/3"
+                      animate={{ x: ["-100%", "300%"] }}
+                      transition={{
+                        duration: 1.2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    ></motion.div>
+                  ) : (
+                    <motion.div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.5 }}
+                    ></motion.div>
+                  )}
                 </div>
               </motion.div>
             )}

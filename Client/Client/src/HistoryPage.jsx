@@ -8,6 +8,7 @@ import {
   FiFileText,
   FiGift,
   FiInbox, // REPLACED FiSparkles with FiGift
+  FiLogOut,
   FiTrash2,
   FiUser,
 } from "react-icons/fi";
@@ -109,6 +110,11 @@ const HistoryPage = () => {
     fetchData();
   }, [navigate]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   const handleDelete = async (id) => {
     const original = [...historyItems];
     setHistoryItems(historyItems.filter((item) => item._id !== id));
@@ -202,7 +208,15 @@ const HistoryPage = () => {
   />
                   </motion.a>
         <h1 className="text-2xl font-semibold">Your History</h1>
-        <div className="w-10" />
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleLogout}
+          className="flex items-center gap-2 py-2 px-4 rounded-full bg-[#1E1E3C] border border-[#2D2D5A] text-[#A1A1AA] hover:text-white hover:border-[#5D5FEF] transition-colors"
+        >
+          <FiLogOut />
+          <span className="hidden sm:inline">Logout</span>
+        </motion.button>
       </motion.header>
 
       <main className="max-w-7xl mx-auto px-4 py-12">
@@ -239,7 +253,7 @@ const HistoryPage = () => {
                 </div>
               ) : historyItems.length === 0 ? (
                 <motion.div
-                  className="col-span-full mt-12 flex flex-col items-center gap-4 bg-[#1E1E3C] p-8 rounded-2xl border-dashed border-[#2D2D5A]"
+                  className="col-span-full mt-12 flex flex-col items-center gap-4 bg-[#1E1E3C] p-8 rounded-2xl border border-dashed border-[#2D2D5A]"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
